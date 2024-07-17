@@ -1,13 +1,16 @@
-from transformers import AutoTokenizer, AutoModel 
+from transformers import BartForConditionalGeneration, BartTokenizer
 
-tokenizer = AutoTokenizer.from_pretrained("seyonec/ChemBERTa-zinc-base-v1")
-model = AutoModel.from_pretrained("seyonec/ChemBERTa-zinc-base-v1")
+# clobetasol proprionate SMILES: CC(=O)OC1C(C(C2C1C3CCC4=CC(=O)CCC4(C3(C2(C(=O)CO)C)O)C)Cl)OC(=O)C
 
-# tokenize SMILES strings 
-input = tokenizer(data['smiles'].tolist(), return_tensors='pt', padding=True, truncation=True)
+model_name = "seyonec/PubChem10M_SMILES_BART"
+tokenizer = BartTokenizer.from_pretrained(model_name)
+model = BartForConditionalGeneration.from_pretrained(model_name)
 
-#generate embeddings
-with torch.no_grad():
-    output = model(**input)
-    
-embeddings = outputs.last_hidden_state
+# SMILES string 
+smiles = "CC(=O)OC1C(C(C2C1C3CCC4=CC(=O)CCC4(C3(C2(C(=O)CO)C)O)C)Cl)OC(=O)C"
+inputs = tokenizer(smiles, return_tensors="pt")
+
+#generate docking patterns
+outputs = model.generate(inputs['input_ids'], max_length=512, num_return_sequences=5)
+docking_patterns = [tokenizer.decode(output, skip_special_tokens=True) for output in outputs]
+
